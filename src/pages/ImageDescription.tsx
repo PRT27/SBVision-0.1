@@ -1,13 +1,13 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
-import { Loader2, FileText, Download, Share, Volume2, VolumeX } from 'lucide-react';
+import { Loader2, FileText, Download, Share, Volume2, VolumeX, Mic, MicOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
-import { generateImageDescription } from '@/utils/imageDescription';
+import { generateImageDescription, analyzeFacialExpressions } from '@/utils/imageDescription';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
+import { detectFaces } from '@/utils/faceRecognition';
 
 const ImageDescription = () => {
   const location = useLocation();
@@ -19,11 +19,14 @@ const ImageDescription = () => {
   const [imageDescription, setImageDescription] = useState<string>('');
   const [detectedObjects, setDetectedObjects] = useState<any[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [facialExpressions, setFacialExpressions] = useState<any[]>([]);
   
   const imageRef = useRef<HTMLImageElement>(null);
   const modelRef = useRef<cocoSsd.ObjectDetection | null>(null);
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   
-  // Redirect if no image provided
   useEffect(() => {
     if (!imagePath) {
       navigate('/camera');
@@ -31,7 +34,6 @@ const ImageDescription = () => {
     }
   }, [imagePath, navigate]);
   
-  // Initialize models
   useEffect(() => {
     const loadModel = async () => {
       try {
@@ -47,9 +49,38 @@ const ImageDescription = () => {
     };
     
     loadModel();
+
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognitionAPI();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        handleVoiceCommand(transcript);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+        toast.error("Speech recognition failed");
+      };
+    }
+
+    return () => {
+      stopSpeech();
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
   }, []);
   
-  // Process the image when it's loaded and the model is ready
   useEffect(() => {
     if (!isModelLoading && imageRef.current && imageRef.current.complete) {
       analyzeImage();
@@ -68,11 +99,16 @@ const ImageDescription = () => {
     setIsLoading(true);
     
     try {
-      // Detect objects in the image
       const predictions = await modelRef.current.detect(imageRef.current);
       setDetectedObjects(predictions);
       
-      // Generate comprehensive description
+      const faces = await detectFaces(imageRef.current);
+      
+      if (faces.length > 0) {
+        const expressions = await analyzeFacialExpressions(imageRef.current, faces);
+        setFacialExpressions(expressions);
+      }
+      
       const description = await generateImageDescription(imageRef.current, predictions);
       setImageDescription(description);
       
@@ -89,11 +125,9 @@ const ImageDescription = () => {
     if (!imageDescription) return;
     
     if ('speechSynthesis' in window) {
-      // Stop any current speech
-      window.speechSynthesis.cancel();
+      stopSpeech();
       
       if (isSpeaking) {
-        setIsSpeaking(false);
         return;
       }
       
@@ -107,11 +141,60 @@ const ImageDescription = () => {
       utterance.onerror = () => {
         setIsSpeaking(false);
         toast.error("Speech synthesis failed");
-      }
+      };
       
+      speechSynthesisRef.current = utterance;
       window.speechSynthesis.speak(utterance);
+      toast.info("Speaking description...");
     } else {
       toast.error("Text-to-speech is not supported on this device");
+    }
+  };
+  
+  const stopSpeech = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  };
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      toast.error("Speech recognition is not supported on this device");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+        toast.info("Listening for voice commands...");
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+        toast.error("Failed to start listening");
+        setIsListening(false);
+      }
+    }
+  };
+
+  const handleVoiceCommand = (command: string) => {
+    toast.success(`Command received: ${command}`);
+    
+    if (command.includes('speak') || command.includes('read') || command.includes('tell me')) {
+      speakDescription();
+    } else if (command.includes('stop') || command.includes('quiet') || command.includes('silence')) {
+      stopSpeech();
+    } else if (command.includes('save') || command.includes('download')) {
+      handleSaveResult();
+    } else if (command.includes('share')) {
+      handleShareResult();
+    } else if (command.includes('back') || command.includes('return') || command.includes('go back')) {
+      navigate('/camera');
+    } else {
+      toast.info("Command not recognized. Try saying 'speak', 'stop', 'save', or 'share'.");
     }
   };
   
@@ -135,7 +218,6 @@ const ImageDescription = () => {
   
   const handleSaveResult = async () => {
     try {
-      // In a real app, this would use Capacitor's Filesystem API to save the text
       toast.success("Description saved", {
         description: "This is a placeholder for actual file saving"
       });
@@ -182,19 +264,37 @@ const ImageDescription = () => {
               Image Description
             </h2>
             
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={speakDescription}
-              disabled={!imageDescription || isLoading}
-              className="h-8 w-8"
-            >
-              {isSpeaking ? (
-                <VolumeX className="h-5 w-5 text-red-500" />
-              ) : (
-                <Volume2 className="h-5 w-5 text-app-blue" />
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleListening}
+                disabled={!imageDescription || isLoading}
+                className="h-8 w-8"
+                title={isListening ? "Stop listening" : "Start voice commands"}
+              >
+                {isListening ? (
+                  <MicOff className="h-5 w-5 text-red-500" />
+                ) : (
+                  <Mic className="h-5 w-5 text-app-blue" />
+                )}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={isSpeaking ? stopSpeech : speakDescription}
+                disabled={!imageDescription || isLoading}
+                className="h-8 w-8"
+                title={isSpeaking ? "Stop speaking" : "Speak description"}
+              >
+                {isSpeaking ? (
+                  <VolumeX className="h-5 w-5 text-red-500" />
+                ) : (
+                  <Volume2 className="h-5 w-5 text-app-blue" />
+                )}
+              </Button>
+            </div>
           </div>
           
           {imageDescription ? (
@@ -214,6 +314,22 @@ const ImageDescription = () => {
                           className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs"
                         >
                           {obj.class} ({Math.round(obj.score * 100)}%)
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {facialExpressions.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <h3 className="font-medium text-sm mb-2 text-gray-600">Facial Expressions</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {facialExpressions.map((expr, index) => (
+                        <span 
+                          key={index}
+                          className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs"
+                        >
+                          Face {expr.faceIndex + 1}: {expr.expression} ({Math.round(expr.confidence * 100)}%)
                         </span>
                       ))}
                     </div>

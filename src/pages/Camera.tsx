@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera as CameraIcon, Image, Zap, UserSearch, User, PieChart, MessageSquareText, Brain, FileText } from 'lucide-react';
+import { Camera as CameraIcon, Image, Zap, UserSearch, User, PieChart, MessageSquareText, Brain, FileText, Volume2 } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -13,7 +13,6 @@ const CameraPage = () => {
   const [analysisMode, setAnalysisMode] = useState<'labeling' | 'detection' | 'recognition' | 'scene' | 'description'>('labeling');
   
   useEffect(() => {
-    // Check for camera permissions
     checkPermissions();
   }, []);
 
@@ -66,7 +65,6 @@ const CameraPage = () => {
         correctOrientation: true,
       });
       
-      // Navigate to the appropriate analysis page based on mode
       const destination = 
         analysisMode === 'detection' ? '/face-detection' :
         analysisMode === 'recognition' ? '/face-recognition' :
@@ -99,7 +97,6 @@ const CameraPage = () => {
         correctOrientation: true,
       });
       
-      // Navigate to the appropriate analysis page based on mode
       const destination = 
         analysisMode === 'detection' ? '/face-detection' :
         analysisMode === 'recognition' ? '/face-recognition' :
@@ -198,6 +195,18 @@ const CameraPage = () => {
                   <FileText size={20} className="mb-1" />
                   <span className="text-xs">Description</span>
                 </Button>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
+              <div className="flex items-start space-x-3">
+                <Volume2 size={20} className="text-app-blue flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-medium text-app-dark-blue">Voice Commands</h3>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Use voice commands like "speak", "stop", "save", or "share" in analysis screens.
+                  </p>
+                </div>
               </div>
             </div>
             

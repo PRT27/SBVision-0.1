@@ -24,8 +24,14 @@ export const generateImageDescription = async (
     // 2. Detect faces
     const faceResults = await detectFaces(image);
     
-    // 3. Combine all detection results to create a comprehensive description
-    return composeDescription(detectedObjects, sceneResults, faceResults);
+    // 3. Analyze facial expressions if faces detected
+    let expressionResults: FacialExpressionResult[] = [];
+    if (faceResults.length > 0) {
+      expressionResults = await analyzeFacialExpressions(image, faceResults);
+    }
+    
+    // 4. Combine all detection results to create a comprehensive description
+    return composeDescription(detectedObjects, sceneResults, faceResults, expressionResults);
   } catch (error) {
     console.error("Error generating image description:", error);
     return "Unable to generate image description due to an error.";
@@ -38,7 +44,8 @@ export const generateImageDescription = async (
 const composeDescription = (
   objects: DetectedObject[],
   sceneResults: SceneAnalysisResult[],
-  faceResults: any[]
+  faceResults: any[],
+  expressionResults: FacialExpressionResult[] = []
 ): string => {
   // Start with scene context if available
   let description = "";
@@ -48,12 +55,47 @@ const composeDescription = (
     description += `This image shows a ${topScene}. `;
   }
   
-  // Add information about detected people
+  // Add information about detected people and their expressions
   if (faceResults.length > 0) {
     if (faceResults.length === 1) {
-      description += "There is one person in the image. ";
+      description += "There is one person in the image";
+      
+      // Add expression if available
+      if (expressionResults.length > 0) {
+        const expression = expressionResults[0].expression;
+        description += ` who appears to be ${expression}`;
+      }
+      
+      description += ". ";
     } else {
       description += `There are ${faceResults.length} people in the image. `;
+      
+      // Add expressions if available for multiple people
+      if (expressionResults.length > 0) {
+        const expressionCounts: Record<string, number> = {};
+        expressionResults.forEach(result => {
+          const expr = result.expression;
+          expressionCounts[expr] = (expressionCounts[expr] || 0) + 1;
+        });
+        
+        const expressionDescriptions = Object.entries(expressionCounts)
+          .map(([expr, count]) => {
+            if (count === 1) {
+              return `one person appears ${expr}`;
+            } else {
+              return `${count} people appear ${expr}`;
+            }
+          });
+        
+        if (expressionDescriptions.length === 1) {
+          description += `${expressionDescriptions[0]}. `;
+        } else if (expressionDescriptions.length === 2) {
+          description += `${expressionDescriptions[0]} and ${expressionDescriptions[1]}. `;
+        } else if (expressionDescriptions.length > 2) {
+          const lastItem = expressionDescriptions.pop();
+          description += `${expressionDescriptions.join(', ')}, and ${lastItem}. `;
+        }
+      }
     }
   }
   
