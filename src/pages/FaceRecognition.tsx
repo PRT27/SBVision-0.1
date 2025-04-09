@@ -12,19 +12,29 @@ import {
   getFacialDescriptor, 
   FaceDetectionResult 
 } from '@/utils/faceRecognition';
+import { analyzeDeepfake } from '@/utils/imageDescription';
 
 const FaceRecognition = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { imagePath, imageSource } = location.state || {};
+  const { imagePath, imageSource, analysisMode } = location.state || {};
   
   const [isLoading, setIsLoading] = useState(true);
   const [faceData, setFaceData] = useState<FaceDetectionResult[]>([]);
   const [analyzedImageUrl, setAnalyzedImageUrl] = useState<string | null>(null);
   const [selectedFace, setSelectedFace] = useState<number | null>(null);
+  const [deepfakeAnalysis, setDeepfakeAnalysis] = useState<any>(null);
+  const [isDeepfakeMode, setIsDeepfakeMode] = useState(false);
   
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // Check if we're in deepfake mode
+  useEffect(() => {
+    if (analysisMode === 'deepfake') {
+      setIsDeepfakeMode(true);
+    }
+  }, [analysisMode]);
   
   // Redirect if no image provided
   useEffect(() => {
@@ -41,18 +51,25 @@ const FaceRecognition = () => {
     if (!imageRef.current || !canvasRef.current) return;
     
     setIsLoading(true);
-    toast.info("Analyzing faces...");
+    toast.info(isDeepfakeMode ? "Analyzing for deepfakes..." : "Analyzing faces...");
     
     try {
       // Detect faces in the image
       const faces = await detectFaces(imageRef.current);
       setFaceData(faces);
       
+      // Perform deepfake analysis if in deepfake mode
+      if (isDeepfakeMode && faces.length > 0) {
+        const deepfakeResult = await analyzeDeepfake(imageRef.current, faces);
+        setDeepfakeAnalysis(deepfakeResult);
+      }
+      
       // Draw faces on canvas
       drawFaceDetection(canvasRef.current, imageRef.current, faces, {
         drawBoundingBox: true,
         drawLandmarks: true,
-        drawLabels: true
+        drawLabels: true,
+        boxColor: isDeepfakeMode && deepfakeAnalysis?.isDeepfake ? '#ef4444' : '#0056b3'
       });
       
       // Set the analyzed image from the canvas
@@ -62,6 +79,14 @@ const FaceRecognition = () => {
       
       if (faces.length === 0) {
         toast.info("No faces detected in the image");
+      } else if (isDeepfakeMode) {
+        if (deepfakeAnalysis?.isDeepfake) {
+          toast.error("Potential deepfake detected", {
+            description: `Confidence: ${Math.round(deepfakeAnalysis.confidence * 100)}%`
+          });
+        } else {
+          toast.success("No signs of manipulation detected");
+        }
       } else {
         toast.success(`Detected ${faces.length} ${faces.length === 1 ? 'face' : 'faces'}`);
       }
@@ -80,7 +105,8 @@ const FaceRecognition = () => {
       drawFaceDetection(canvasRef.current, imageRef.current, faceData, {
         drawBoundingBox: true,
         drawLandmarks: false,
-        drawLabels: true
+        drawLabels: true,
+        boxColor: isDeepfakeMode && deepfakeAnalysis?.isDeepfake ? '#ef4444' : '#0056b3'
       });
       
       // Highlight selected face
@@ -132,8 +158,8 @@ const FaceRecognition = () => {
     try {
       if (navigator.share && analyzedImageUrl) {
         await navigator.share({
-          title: 'Face Recognition Result',
-          text: 'Check out this face recognition result from Sight Beyond Vision app!',
+          title: isDeepfakeMode ? 'Deepfake Analysis Result' : 'Face Recognition Result',
+          text: `Check out this ${isDeepfakeMode ? 'deepfake analysis' : 'face recognition'} result from Sight Beyond Vision app!`,
           url: location.pathname,
         });
         toast.success("Shared successfully");
@@ -180,7 +206,11 @@ const FaceRecognition = () => {
 
   return (
     <div className="app-container">
-      <AppHeader title="Face Recognition" showBackButton={true} backPath="/camera" />
+      <AppHeader 
+        title={isDeepfakeMode ? "Deepfake Analysis" : "Face Recognition"} 
+        showBackButton={true} 
+        backPath="/camera" 
+      />
       
       <main className="flex-1 p-4">
         {isLoading && (
@@ -188,7 +218,7 @@ const FaceRecognition = () => {
             <div className="bg-white p-6 rounded-xl shadow-lg text-center">
               <Loader2 className="h-8 w-8 animate-spin text-app-blue mx-auto mb-4" />
               <p className="font-medium text-app-dark-blue">
-                Analyzing faces...
+                {isDeepfakeMode ? "Analyzing for potential deepfakes..." : "Analyzing faces..."}
               </p>
               <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
             </div>
@@ -200,7 +230,7 @@ const FaceRecognition = () => {
             <img
               ref={imageRef}
               src={imagePath}
-              alt="Image for face recognition"
+              alt="Image for analysis"
               className="w-full h-auto object-contain"
               onLoad={handleImageLoad}
               style={{ display: 'block' }}
@@ -214,12 +244,59 @@ const FaceRecognition = () => {
         
         <div className="mb-6">
           <h2 className="text-xl font-bold text-app-blue mb-2 flex items-center">
-            <User className="mr-2" size={20} />
-            Face Recognition Results
+            {isDeepfakeMode ? (
+              <>
+                <AlertTriangle className="mr-2" size={20} />
+                Deepfake Analysis Results
+              </>
+            ) : (
+              <>
+                <User className="mr-2" size={20} />
+                Face Recognition Results
+              </>
+            )}
           </h2>
           
           {faceData.length > 0 ? (
             <div className="space-y-4">
+              {isDeepfakeMode && deepfakeAnalysis && (
+                <Card className={deepfakeAnalysis.isDeepfake ? "border-red-500 bg-red-50" : "border-green-500 bg-green-50"}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center">
+                      {deepfakeAnalysis.isDeepfake ? (
+                        <>
+                          <AlertTriangle className="text-red-500 mr-2" size={18} />
+                          <span className="text-red-700">Potential Deepfake Detected</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="text-green-500 mr-2" size={18} />
+                          <span className="text-green-700">No Signs of Manipulation Detected</span>
+                        </>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm mb-3">
+                      Confidence: <span className="font-medium">{Math.round(deepfakeAnalysis.confidence * 100)}%</span>
+                    </p>
+                    
+                    {deepfakeAnalysis.isDeepfake && deepfakeAnalysis.manipulationDetails.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm font-medium mb-1">Detected manipulations:</p>
+                        <ul className="text-xs space-y-1 text-red-800">
+                          {deepfakeAnalysis.manipulationDetails.map((detail: string, idx: number) => (
+                            <li key={idx} className="flex items-start">
+                              <span className="mr-1">•</span> {detail}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+              
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg">
@@ -289,7 +366,7 @@ const FaceRecognition = () => {
           ) : (
             <div className="bg-white rounded-xl shadow-sm p-4 text-center text-gray-500">
               {isLoading ? 
-                "Analyzing faces..." : 
+                `Analyzing ${isDeepfakeMode ? 'for deepfakes' : 'faces'}...` : 
                 "No faces detected in this image"}
             </div>
           )}

@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.lovable.ec50cfad8c904b8192778e21943fbb93',
-  appName: 'sight-beyond-vision-android',
+  appName: 'Sight Beyond Vision',
   webDir: 'dist',
   bundledWebRuntime: false,
   server: {
@@ -21,6 +21,15 @@ const config: CapacitorConfig = {
     Camera: {
       presentationStyle: 'fullscreen',
       androidScaleType: 'fitCenter',
+    },
+    // Permissions configuration for Android
+    Permissions: {
+      permissions: [
+        "android.permission.CAMERA", 
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE", 
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     }
   }
 };

@@ -30,8 +30,14 @@ export const generateImageDescription = async (
       expressionResults = await analyzeFacialExpressions(image, faceResults);
     }
     
-    // 4. Combine all detection results to create a comprehensive description
-    return composeDescription(detectedObjects, sceneResults, faceResults, expressionResults);
+    // 4. Check for deepfakes if faces detected
+    let deepfakeResults: DeepfakeAnalysisResult | null = null;
+    if (faceResults.length > 0) {
+      deepfakeResults = await analyzeDeepfake(image, faceResults);
+    }
+    
+    // 5. Combine all detection results to create a comprehensive description
+    return composeDescription(detectedObjects, sceneResults, faceResults, expressionResults, deepfakeResults);
   } catch (error) {
     console.error("Error generating image description:", error);
     return "Unable to generate image description due to an error.";
@@ -45,7 +51,8 @@ const composeDescription = (
   objects: DetectedObject[],
   sceneResults: SceneAnalysisResult[],
   faceResults: any[],
-  expressionResults: FacialExpressionResult[] = []
+  expressionResults: FacialExpressionResult[] = [],
+  deepfakeResults: DeepfakeAnalysisResult | null = null
 ): string => {
   // Start with scene context if available
   let description = "";
@@ -95,6 +102,19 @@ const composeDescription = (
           const lastItem = expressionDescriptions.pop();
           description += `${expressionDescriptions.join(', ')}, and ${lastItem}. `;
         }
+      }
+    }
+    
+    // Add deepfake analysis if available
+    if (deepfakeResults) {
+      if (deepfakeResults.isDeepfake) {
+        description += `Caution: This image appears to be artificially generated or manipulated (confidence: ${Math.round(deepfakeResults.confidence * 100)}%). `;
+        
+        if (deepfakeResults.manipulationDetails.length > 0) {
+          description += `Detected manipulations include ${deepfakeResults.manipulationDetails.join(', ')}. `;
+        }
+      } else if (deepfakeResults.confidence > 0.8) {
+        description += `This appears to be an authentic image with no signs of manipulation. `;
       }
     }
   }
@@ -160,9 +180,57 @@ export const analyzeFacialExpressions = async (
   });
 };
 
+/**
+ * Analyze an image for signs of deepfake or manipulation
+ */
+export const analyzeDeepfake = async (
+  image: HTMLImageElement | HTMLCanvasElement,
+  faces: any[]
+): Promise<DeepfakeAnalysisResult> => {
+  // In a real implementation, this would use a deepfake detection model
+  // For this prototype, we'll return simulated results
+  
+  // Simulated deepfake analysis
+  const isDeepfake = Math.random() > 0.7; // 30% chance of being classified as deepfake for demo
+  const confidence = 0.6 + Math.random() * 0.4; // Random confidence between 0.6 and 1.0
+  
+  let manipulationDetails: string[] = [];
+  if (isDeepfake) {
+    const possibleManipulations = [
+      'facial feature substitution',
+      'inconsistent lighting',
+      'unnatural skin texture',
+      'irregular eye reflections',
+      'abnormal facial proportions',
+      'edge artifacts',
+      'background inconsistencies'
+    ];
+    
+    // Select 1-3 random manipulation types
+    const manipulationCount = Math.floor(Math.random() * 3) + 1;
+    for (let i = 0; i < manipulationCount; i++) {
+      const index = Math.floor(Math.random() * possibleManipulations.length);
+      manipulationDetails.push(possibleManipulations[index]);
+      possibleManipulations.splice(index, 1); // Remove to avoid duplicates
+    }
+  }
+  
+  return {
+    isDeepfake,
+    confidence,
+    manipulationDetails
+  };
+};
+
 // Types
 export interface FacialExpressionResult {
   faceIndex: number;
   expression: string;
   confidence: number;
+}
+
+export interface DeepfakeAnalysisResult {
+  isDeepfake: boolean;
+  confidence: number;
+  manipulationDetails: string[];
 }

@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Camera as CameraIcon, Image, Zap, UserSearch, User, PieChart, MessageSquareText, Brain, FileText, Volume2 } from 'lucide-react';
+import { Camera as CameraIcon, Image, Zap, UserSearch, User, PieChart, MessageSquareText, Brain, FileText, Volume2, AlertTriangle } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -10,7 +11,7 @@ const CameraPage = () => {
   const navigate = useNavigate();
   const [flashMode, setFlashMode] = useState<'off' | 'on'>('off');
   const [hasPermissions, setHasPermissions] = useState<boolean>(false);
-  const [analysisMode, setAnalysisMode] = useState<'labeling' | 'detection' | 'recognition' | 'scene' | 'description'>('labeling');
+  const [analysisMode, setAnalysisMode] = useState<'labeling' | 'detection' | 'recognition' | 'scene' | 'description' | 'deepfake'>('labeling');
   
   useEffect(() => {
     checkPermissions();
@@ -70,12 +71,14 @@ const CameraPage = () => {
         analysisMode === 'recognition' ? '/face-recognition' :
         analysisMode === 'scene' ? '/scene-understanding' :
         analysisMode === 'description' ? '/image-description' :
+        analysisMode === 'deepfake' ? '/face-recognition' : // Reuse face recognition for deepfake
         '/image-labeling';
       
       navigate(destination, { 
         state: { 
           imagePath: image.webPath,
-          imageSource: 'camera' 
+          imageSource: 'camera',
+          analysisMode: analysisMode // Pass the analysis mode to the target page
         } 
       });
       
@@ -102,12 +105,14 @@ const CameraPage = () => {
         analysisMode === 'recognition' ? '/face-recognition' :
         analysisMode === 'scene' ? '/scene-understanding' :
         analysisMode === 'description' ? '/image-description' :
+        analysisMode === 'deepfake' ? '/face-recognition' : // Reuse face recognition for deepfake
         '/image-labeling';
       
       navigate(destination, { 
         state: { 
           imagePath: image.webPath,
-          imageSource: 'gallery' 
+          imageSource: 'gallery',
+          analysisMode: analysisMode // Pass the analysis mode to the target page
         } 
       });
       
@@ -178,7 +183,7 @@ const CameraPage = () => {
                 </Button>
               </div>
               
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <Button 
                   variant={analysisMode === 'scene' ? 'default' : 'outline'}
                   className={`flex flex-col h-auto py-3 ${analysisMode === 'scene' ? 'bg-app-blue' : ''}`}
@@ -194,6 +199,14 @@ const CameraPage = () => {
                 >
                   <FileText size={20} className="mb-1" />
                   <span className="text-xs">Description</span>
+                </Button>
+                <Button 
+                  variant={analysisMode === 'deepfake' ? 'default' : 'outline'}
+                  className={`flex flex-col h-auto py-3 ${analysisMode === 'deepfake' ? 'bg-app-blue' : ''}`}
+                  onClick={() => setAnalysisMode('deepfake')}
+                >
+                  <AlertTriangle size={20} className="mb-1" />
+                  <span className="text-xs">Deepfake Check</span>
                 </Button>
               </div>
             </div>

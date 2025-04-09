@@ -57,3 +57,53 @@ interface Window {
   SpeechRecognition?: SpeechRecognitionConstructor;
   webkitSpeechRecognition?: SpeechRecognitionConstructor;
 }
+
+// Speech synthesis declarations
+interface SpeechSynthesisUtterance extends EventTarget {
+  text: string;
+  lang: string;
+  voice: SpeechSynthesisVoice | null;
+  volume: number;
+  rate: number;
+  pitch: number;
+  onstart: ((this: SpeechSynthesisUtterance, ev: Event) => any) | null;
+  onend: ((this: SpeechSynthesisUtterance, ev: Event) => any) | null;
+  onerror: ((this: SpeechSynthesisUtterance, ev: Event) => any) | null;
+  onpause: ((this: SpeechSynthesisUtterance, ev: Event) => any) | null;
+  onresume: ((this: SpeechSynthesisUtterance, ev: Event) => any) | null;
+  onmark: ((this: SpeechSynthesisUtterance, ev: Event) => any) | null;
+  onboundary: ((this: SpeechSynthesisUtterance, ev: Event) => any) | null;
+}
+
+interface SpeechSynthesisUtteranceConstructor {
+  new(): SpeechSynthesisUtterance;
+  new(text: string): SpeechSynthesisUtterance;
+  prototype: SpeechSynthesisUtterance;
+}
+
+interface SpeechSynthesisVoice {
+  readonly voiceURI: string;
+  readonly name: string;
+  readonly lang: string;
+  readonly localService: boolean;
+  readonly default: boolean;
+}
+
+interface SpeechSynthesis extends EventTarget {
+  readonly speaking: boolean;
+  readonly pending: boolean;
+  readonly paused: boolean;
+  onvoiceschanged: ((this: SpeechSynthesis, ev: Event) => any) | null;
+  speak(utterance: SpeechSynthesisUtterance): void;
+  cancel(): void;
+  pause(): void;
+  resume(): void;
+  getVoices(): SpeechSynthesisVoice[];
+}
+
+interface Window {
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  SpeechSynthesisUtterance?: SpeechSynthesisUtteranceConstructor;
+  speechSynthesis?: SpeechSynthesis;
+}
