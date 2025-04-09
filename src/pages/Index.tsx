@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Image, PieChart, Users, Info, Shield } from 'lucide-react';
+import { Camera, Image, PieChart, Users, Info, Shield, UserSearch } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import { toast } from 'sonner';
 
@@ -41,6 +41,13 @@ const Index = () => {
       icon: <Users className="h-8 w-8 text-app-blue" />,
       path: "/face-detection",
       color: "bg-purple-50"
+    },
+    {
+      title: "Face Recognition",
+      description: "Advanced facial analysis",
+      icon: <UserSearch className="h-8 w-8 text-app-blue" />,
+      path: "/face-recognition",
+      color: "bg-indigo-50"
     },
     {
       title: "Camera",

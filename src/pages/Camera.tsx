@@ -1,6 +1,6 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Camera as CameraIcon, Image, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Camera as CameraIcon, Image, Zap, UserSearch, User } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -11,6 +11,7 @@ const CameraPage = () => {
   const navigate = useNavigate();
   const [flashMode, setFlashMode] = useState<'off' | 'on'>('off');
   const [hasPermissions, setHasPermissions] = useState<boolean>(false);
+  const [analysisMode, setAnalysisMode] = useState<'labeling' | 'detection' | 'recognition'>('labeling');
   
   useEffect(() => {
     // Check for camera permissions
@@ -66,8 +67,13 @@ const CameraPage = () => {
         correctOrientation: true,
       });
       
-      // Navigate to the image processing page with the captured image
-      navigate('/image-labeling', { 
+      // Navigate to the appropriate analysis page based on mode
+      const destination = 
+        analysisMode === 'detection' ? '/face-detection' :
+        analysisMode === 'recognition' ? '/face-recognition' :
+        '/image-labeling';
+      
+      navigate(destination, { 
         state: { 
           imagePath: image.webPath,
           imageSource: 'camera' 
@@ -92,8 +98,13 @@ const CameraPage = () => {
         correctOrientation: true,
       });
       
-      // Navigate to the image processing page with the selected image
-      navigate('/image-labeling', { 
+      // Navigate to the appropriate analysis page based on mode
+      const destination = 
+        analysisMode === 'detection' ? '/face-detection' :
+        analysisMode === 'recognition' ? '/face-recognition' :
+        '/image-labeling';
+      
+      navigate(destination, { 
         state: { 
           imagePath: image.webPath,
           imageSource: 'gallery' 
@@ -135,6 +146,36 @@ const CameraPage = () => {
               <div className="text-gray-400">
                 <CameraIcon size={64} className="mx-auto mb-4" />
                 <p>Tap the button below to take a picture</p>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
+              <h3 className="font-medium mb-3 text-app-dark-blue">Select Analysis Mode</h3>
+              <div className="grid grid-cols-3 gap-2">
+                <Button 
+                  variant={analysisMode === 'labeling' ? 'default' : 'outline'}
+                  className={`flex flex-col h-auto py-3 ${analysisMode === 'labeling' ? 'bg-app-blue' : ''}`}
+                  onClick={() => setAnalysisMode('labeling')}
+                >
+                  <PieChart size={20} className="mb-1" />
+                  <span className="text-xs">Labeling</span>
+                </Button>
+                <Button 
+                  variant={analysisMode === 'detection' ? 'default' : 'outline'}
+                  className={`flex flex-col h-auto py-3 ${analysisMode === 'detection' ? 'bg-app-blue' : ''}`}
+                  onClick={() => setAnalysisMode('detection')}
+                >
+                  <User size={20} className="mb-1" />
+                  <span className="text-xs">Detection</span>
+                </Button>
+                <Button 
+                  variant={analysisMode === 'recognition' ? 'default' : 'outline'}
+                  className={`flex flex-col h-auto py-3 ${analysisMode === 'recognition' ? 'bg-app-blue' : ''}`}
+                  onClick={() => setAnalysisMode('recognition')}
+                >
+                  <UserSearch size={20} className="mb-1" />
+                  <span className="text-xs">Recognition</span>
+                </Button>
               </div>
             </div>
             

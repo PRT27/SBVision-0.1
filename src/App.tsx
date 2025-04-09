@@ -9,6 +9,7 @@ import Camera from "./pages/Camera";
 import Gallery from "./pages/Gallery";
 import ImageLabeling from "./pages/ImageLabeling";
 import FaceDetection from "./pages/FaceDetection";
+import FaceRecognition from "./pages/FaceRecognition";  // Add import
 import Security from "./pages/Security";
 import Settings from "./pages/Settings";
 import About from "./pages/About";
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/image-labeling" element={<ImageLabeling />} />
           <Route path="/face-detection" element={<FaceDetection />} />
+          <Route path="/face-recognition" element={<FaceRecognition />} />  {/* Add new route */}
           <Route path="/security" element={<Security />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/about" element={<About />} />
