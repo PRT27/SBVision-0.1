@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Camera as CameraIcon, Image, Zap, UserSearch, User } from 'lucide-react';
+import { Camera as CameraIcon, Image, Zap, UserSearch, User, PieChart } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
