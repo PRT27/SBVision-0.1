@@ -103,8 +103,39 @@ export default {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
                 'pulse-light': 'pulse-light 2s ease-in-out infinite'
-			}
+			},
+            // Add safe area utilities for mobile devices
+            padding: {
+                'safe-area': 'env(safe-area-inset-bottom, 0px)',
+            }
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [
+        require("tailwindcss-animate"),
+        function({ addUtilities }) {
+            const newUtilities = {
+                '.pt-safe-area': {
+                    paddingTop: 'env(safe-area-inset-top, 0px)'
+                },
+                '.pr-safe-area': {
+                    paddingRight: 'env(safe-area-inset-right, 0px)'
+                },
+                '.pb-safe-area': {
+                    paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+                },
+                '.pl-safe-area': {
+                    paddingLeft: 'env(safe-area-inset-left, 0px)'
+                },
+                '.px-safe-area': {
+                    paddingLeft: 'env(safe-area-inset-left, 0px)',
+                    paddingRight: 'env(safe-area-inset-right, 0px)'
+                },
+                '.py-safe-area': {
+                    paddingTop: 'env(safe-area-inset-top, 0px)',
+                    paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+                }
+            };
+            addUtilities(newUtilities);
+        }
+    ],
 } satisfies Config;
