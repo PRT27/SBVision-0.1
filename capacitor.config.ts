@@ -17,6 +17,10 @@ const config: CapacitorConfig = {
       showSpinner: true,
       spinnerColor: "#FFFFFF",
       androidScaleType: "CENTER_CROP"
+    },
+    Camera: {
+      presentationStyle: 'fullscreen',
+      androidScaleType: 'fitCenter',
     }
   }
 };
