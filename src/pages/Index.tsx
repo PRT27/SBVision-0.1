@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Image, PieChart, Users, Info, Shield, UserSearch } from 'lucide-react';
+import { Camera, Image, PieChart, Users, Info, Shield, UserSearch, Brain, FileText } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import { toast } from 'sonner';
 
@@ -50,6 +50,20 @@ const Index = () => {
       color: "bg-indigo-50"
     },
     {
+      title: "Scene Understanding",
+      description: "Analyze environment context",
+      icon: <Brain className="h-8 w-8 text-app-blue" />,
+      path: "/scene-understanding",
+      color: "bg-green-50"
+    },
+    {
+      title: "Image Description",
+      description: "Generate textual descriptions",
+      icon: <FileText className="h-8 w-8 text-app-blue" />,
+      path: "/image-description",
+      color: "bg-amber-50"
+    },
+    {
       title: "Camera",
       description: "Capture images for analysis",
       icon: <Camera className="h-8 w-8 text-app-blue" />,
@@ -89,7 +103,7 @@ const Index = () => {
           <p className="text-gray-600">Advanced image analysis and facial recognition</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 px-4">
           {features.map((feature) => (
             <button
               key={feature.title}
@@ -103,7 +117,7 @@ const Index = () => {
           ))}
         </div>
 
-        <div className="mt-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="mt-8 mx-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <h2 className="font-semibold text-app-dark-blue mb-2">Getting Started</h2>
           <p className="text-sm text-gray-600 mb-3">
             Tap on any feature to begin. For best results, ensure you have good lighting when taking photos.

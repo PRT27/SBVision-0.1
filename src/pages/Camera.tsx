@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Camera as CameraIcon, Image, Zap, UserSearch, User, PieChart } from 'lucide-react';
+import { Camera as CameraIcon, Image, Zap, UserSearch, User, PieChart, MessageSquareText, Brain, FileText } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -11,7 +10,7 @@ const CameraPage = () => {
   const navigate = useNavigate();
   const [flashMode, setFlashMode] = useState<'off' | 'on'>('off');
   const [hasPermissions, setHasPermissions] = useState<boolean>(false);
-  const [analysisMode, setAnalysisMode] = useState<'labeling' | 'detection' | 'recognition'>('labeling');
+  const [analysisMode, setAnalysisMode] = useState<'labeling' | 'detection' | 'recognition' | 'scene' | 'description'>('labeling');
   
   useEffect(() => {
     // Check for camera permissions
@@ -71,6 +70,8 @@ const CameraPage = () => {
       const destination = 
         analysisMode === 'detection' ? '/face-detection' :
         analysisMode === 'recognition' ? '/face-recognition' :
+        analysisMode === 'scene' ? '/scene-understanding' :
+        analysisMode === 'description' ? '/image-description' :
         '/image-labeling';
       
       navigate(destination, { 
@@ -102,6 +103,8 @@ const CameraPage = () => {
       const destination = 
         analysisMode === 'detection' ? '/face-detection' :
         analysisMode === 'recognition' ? '/face-recognition' :
+        analysisMode === 'scene' ? '/scene-understanding' :
+        analysisMode === 'description' ? '/image-description' :
         '/image-labeling';
       
       navigate(destination, { 
@@ -151,7 +154,7 @@ const CameraPage = () => {
             
             <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
               <h3 className="font-medium mb-3 text-app-dark-blue">Select Analysis Mode</h3>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 mb-2">
                 <Button 
                   variant={analysisMode === 'labeling' ? 'default' : 'outline'}
                   className={`flex flex-col h-auto py-3 ${analysisMode === 'labeling' ? 'bg-app-blue' : ''}`}
@@ -166,7 +169,7 @@ const CameraPage = () => {
                   onClick={() => setAnalysisMode('detection')}
                 >
                   <User size={20} className="mb-1" />
-                  <span className="text-xs">Detection</span>
+                  <span className="text-xs">Face Detection</span>
                 </Button>
                 <Button 
                   variant={analysisMode === 'recognition' ? 'default' : 'outline'}
@@ -174,7 +177,26 @@ const CameraPage = () => {
                   onClick={() => setAnalysisMode('recognition')}
                 >
                   <UserSearch size={20} className="mb-1" />
-                  <span className="text-xs">Recognition</span>
+                  <span className="text-xs">Face Recognition</span>
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant={analysisMode === 'scene' ? 'default' : 'outline'}
+                  className={`flex flex-col h-auto py-3 ${analysisMode === 'scene' ? 'bg-app-blue' : ''}`}
+                  onClick={() => setAnalysisMode('scene')}
+                >
+                  <Brain size={20} className="mb-1" />
+                  <span className="text-xs">Scene Analysis</span>
+                </Button>
+                <Button 
+                  variant={analysisMode === 'description' ? 'default' : 'outline'}
+                  className={`flex flex-col h-auto py-3 ${analysisMode === 'description' ? 'bg-app-blue' : ''}`}
+                  onClick={() => setAnalysisMode('description')}
+                >
+                  <FileText size={20} className="mb-1" />
+                  <span className="text-xs">Description</span>
                 </Button>
               </div>
             </div>
