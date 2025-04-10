@@ -9,12 +9,27 @@ import {
   Users,
   Github,
   Mail,
-  HeartHandshake
+  HeartHandshake,
+  ExternalLink
 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const About = () => {
+  const handleContactClick = () => {
+    // Copy email to clipboard
+    navigator.clipboard.writeText("khanyasakhecte@gmail.com");
+    toast.success("Email copied to clipboard", {
+      description: "khanyasakhecte@gmail.com"
+    });
+  };
+
+  const handleGithubClick = () => {
+    // Open GitHub repository in a new tab
+    window.open("https://github.com/PRT27/sight-beyond-vision-android.git", "_blank");
+  };
+
   return (
     <div className="app-container">
       <AppHeader title="About" showBackButton={true} backPath="/" />
@@ -141,14 +156,38 @@ const About = () => {
             <HeartHandshake className="mr-2" size={18} />
             Contact & Support
           </h2>
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 mb-4">
+            <div className="flex items-center mb-3">
+              <Mail size={16} className="text-app-blue mr-2" />
+              <p className="text-sm font-medium">Email Support:</p>
+            </div>
+            <p className="text-sm text-gray-600 mb-2 pl-6">khanyasakhecte@gmail.com</p>
+            
+            <div className="flex items-center mt-3 mb-2">
+              <Github size={16} className="text-app-blue mr-2" />
+              <p className="text-sm font-medium">GitHub Repository:</p>
+            </div>
+            <p className="text-sm text-gray-600 mb-2 pl-6 break-all">
+              https://github.com/PRT27/sight-beyond-vision-android.git
+            </p>
+          </div>
           <div className="space-y-3 mt-3">
-            <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-2"
+              onClick={handleContactClick}
+            >
               <Mail size={16} />
               <span>Contact Support</span>
             </Button>
-            <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-2"
+              onClick={handleGithubClick}
+            >
               <Github size={16} />
               <span>GitHub Repository</span>
+              <ExternalLink size={12} />
             </Button>
           </div>
         </div>
